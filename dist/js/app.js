@@ -22,21 +22,21 @@ const renderTransactions = () => {
         const li = document.createElement('li');
         li.className = "list-group-item flex items-center justify-between mb-4";
         li.innerHTML = `
-            <div class="flex items-center justify-between p-6 align-middle shadow-md w-full rounded-lg h-auto bg-white">
-                <div class="flex flex-col">
-                    <div class="text-xl text-gray-700 font-bold">${transaction.transactionType || 'Тип не указан'}</div>
-                    <div class="text-lg text-gray-500 ml-2">${transaction.transactionName}</div>
-                </div>
-                <div class="text-right">
-                    <div class="font-bold text-lg text-green-600">${transaction.transactionAmount} UZS</div>
-                    <div class="text-sm text-gray-400">${new Date(transaction.date).toLocaleTimeString()}</div>
-                    <div class="flex space-x-4 mt-2">
-                        <button class="text-blue-500 hover:text-blue-700 font-semibold border border-blue-500 px-2 py-1 rounded">Edit</button>
-                        <button class="text-red-500 hover:text-red-700 font-semibold border border-red-500 px-2 py-1 rounded  " onclick="deleteTransaction(${transaction.date})">Delete</button>
-                    </div>
+        <div class="flex items-center justify-between p-6 align-middle shadow-md w-full rounded-lg h-auto bg-white">
+            <div class="flex flex-col">
+                <div class="text-xl text-gray-700 font-bold">${transaction.transactionType || 'Тип не указан'}</div>
+                <div class="text-lg text-gray-500 ml-2">${transaction.transactionName}</div>
+            </div>
+            <div class="text-right">
+                <div class="font-bold text-lg text-green-600">${transaction.transactionAmount} UZS</div>
+                <div class="text-sm text-gray-400">${new Date(transaction.date).toLocaleTimeString()}</div>
+                <div class="flex space-x-4 mt-2">
+                    <button class="text-blue-500 hover:text-blue-700 font-semibold border border-blue-500 px-2 py-1 rounded">Edit</button>
+                    <button class="text-red-500 hover:text-red-700 font-semibold border border-red-500 px-2 py-1 rounded  " onclick="deleteTransaction(${transaction.date})">Delete</button>
                 </div>
             </div>
-            `;
+        </div>
+        `;
         li.addEventListener("click", (event) => {
             if (event.target.classList.contains("text-blue-500 hover:text-blue-700")) {
                 $transactionList.appendChild(li);
@@ -89,6 +89,68 @@ class Transaction {
         this.date = new Date().getTime();
     }
 }
+let totalIncome = 0;
+let totalExpense = 0;
+const checkBalance = () => {
+    totalIncome = INCOMES.reduce((acc, nextIncome) => acc + nextIncome.transactionAmount, 0);
+    totalExpense = EXPENSES.reduce((acc, nextIncome) => acc + nextIncome.transactionAmount, 0);
+    $displayExpense.innerHTML = `${totalExpense.toString().separateCurrency()} UZS`;
+    $displayIncome.innerHTML = `${(totalIncome - totalExpense).toString().separateCurrency()} UZS`;
+};
+checkBalance();
+const rendeChart = () => {
+    document.querySelector("#chartWrapper").innerHTML = `<canvas id="transactionChart"></canvas>`;
+    const $transactionChart = document.querySelector("#transactionChart");
+    let deleyed = false;
+    // @ts-ignore
+    new Chart($transactionChart, {
+        type: 'pie',
+        data: {
+            datasets: [{
+                    label: 'Data for Income and Expense',
+                    data: [totalIncome, totalExpense],
+                    borderWidth: 3,
+                    backgroundColor: ["green", "red"],
+                }],
+            labels: ['Income', 'Expense'],
+        },
+        options: {
+            layout: {
+                padding: {
+                    top: 20,
+                    bottom: 20
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    align: 'center',
+                    labels: {
+                        boxWidth: 20,
+                        padding: 15
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                onComplete: () => {
+                    deleyed = true;
+                },
+                // @ts-ignore
+                delay: (context) => {
+                    let delay = 0;
+                    if (context.type === 'data' && context.mode === 'default' && !deleyed) {
+                        delay = context.dataIndex * 300 + context.datasetIndex * 100;
+                    }
+                    return delay;
+                },
+            },
+        },
+    });
+};
+rendeChart();
 const createNewTransaction = (e) => {
     e.preventDefault();
     const inputs = Array.from($transactionForm.querySelectorAll("input, select"));
@@ -113,18 +175,12 @@ const createNewTransaction = (e) => {
         inputs.forEach((input) => input.value = "");
         renderTransactions();
         checkBalance();
+        rendeChart();
     }
     else {
         alert("Please fill in all fields");
     }
 };
-const checkBalance = () => {
-    const totalIncome = INCOMES.reduce((acc, nextIncome) => acc + nextIncome.transactionAmount, 0);
-    const totalExpense = EXPENSES.reduce((acc, nextIncome) => acc + nextIncome.transactionAmount, 0);
-    $displayExpense.innerHTML = `${totalExpense.toString().separateCurrency()} UZS`;
-    $displayIncome.innerHTML = `${(totalIncome - totalExpense).toString().separateCurrency()} UZS`;
-};
-checkBalance();
 $incomeBtn.addEventListener("click", () => {
     url.searchParams.set("modal", "income");
     window.history.pushState({ path: location.href.split("?")[0] + "?" + url.searchParams }, "", location.href.split("?")[0] + "?" + url.searchParams);

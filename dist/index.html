@@ -39,14 +39,16 @@
               Add expense
             </button>
           </div>
-          <div
+          <div id="chartWrapper"
             class="flex-1 h-full shadow-[0_0px_20px_0px_lightgrey] rounded-2xl"
-          ></div>
+          >
+        <canvas id="transactionChart"></canvas>
+        </div>
         </div>
       </div>
       <div class="flex-1 shadow-[0_0px_20px_0px_lightgrey] rounded-3xl">
         <div id="transactionList" class="flex-1 overflow-auto scrollbar shadow-[0_0px_20px_0px_lightgrey] rounded-2xl"> 
-         
+        
         </div>
       </div>
     </div>
@@ -91,6 +93,7 @@
             </form>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>var exports = {};</script>
     <script src="./js/app.js"></script>
   </body>
